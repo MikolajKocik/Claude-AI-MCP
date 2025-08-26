@@ -1,44 +1,53 @@
-var builder = WebApplication.CreateBuilder(args);
+using Azure.Core;
+using Azure.Identity;
+using Azure.Monitor.Query;
+using Azure.ResourceManager;
+using Azure.Storage.Blobs;
+using ClaudeMCP.Clients;
+using ClaudeMCP.McpTools;
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+var builder = Host.CreateApplicationBuilder(args);
 
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+builder.Logging.AddConsole(consoleLogOptions =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    consoleLogOptions.LogToStandardErrorThreshold = LogLevel.Trace;
+});
 
-app.UseHttpsRedirection();
+var anthropicKey = Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY")
+    ?? throw new InvalidOperationException("ANTHROPIC_API_KEY not found");
 
-var summaries = new[]
+var claudeModel = Environment.GetEnvironmentVariable("CLAUDE_MODEL")
+    ?? "claude-3-haiku-20240307";
+
+// add mcp server
+builder.Services
+    .AddMcpServer()
+    .WithStdioServerTransport()
+    .WithToolsFromAssembly();
+
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton(provider =>
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+    var http = provider.GetRequiredService<HttpClient>();
+    return new ClaudeClient(http, anthropicKey, claudeModel);
+});
 
-app.MapGet("/weatherforecast", () =>
+builder.Services.AddSingleton<TokenCredential>(_ => new DefaultAzureCredential());
+builder.Services.AddSingleton(provider =>
 {
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
+    var endpoint = Environment.GetEnvironmentVariable("AZURE_BLOB_ENDPOINT")
+        ?? throw new InvalidOperationException("Brak AZURE_BLOB_ENDPOINT");
+    
+    return new BlobServiceClient(new Uri(endpoint), provider.GetRequiredService<TokenCredential>());
+});
 
-app.Run();
+builder.Services.AddSingleton(provider =>
+    new LogsQueryClient(provider.GetRequiredService<TokenCredential>()));
 
-internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+builder.Services.AddSingleton(provider =>
+    new ArmClient(provider.GetRequiredService<TokenCredential>()));
+
+builder.Services.AddSingleton<ComplianceTools>();
+builder.Services.AddSingleton<AzureTools>();
+
+await builder.Build().RunAsync();
