@@ -36,7 +36,7 @@ builder.Services.AddSingleton<TokenCredential>(_ => new DefaultAzureCredential()
 builder.Services.AddSingleton(provider =>
 {
     var endpoint = Environment.GetEnvironmentVariable("AZURE_BLOB_ENDPOINT")
-        ?? throw new InvalidOperationException("Brak AZURE_BLOB_ENDPOINT");
+        ?? throw new InvalidOperationException("AZURE_BLOB_ENDPOINT not found");
     
     return new BlobServiceClient(new Uri(endpoint), provider.GetRequiredService<TokenCredential>());
 });

@@ -153,23 +153,4 @@ public sealed class AzureTools
             : "Encryption BLOB: Turned Off";
 
     }
-
-    /// <summary>
-    /// Invokes an Azure Function (HTTP trigger) with a JSON payload and returns the HTTP response as a string.
-    /// </summary>
-    /// <remarks>This method sends an HTTP POST request to the specified Azure Function URL with the provided
-    /// JSON payload. Ensure that the URL includes any required authentication code or query parameters.</remarks>
-    /// <param name="functionUrlWithCode">The full URL of the Azure Function, including the access code if required.</param>
-    /// <param name="jsonPayLoad">The JSON payload to send in the HTTP POST request body.</param>
-    /// <returns>A string containing the HTTP status code and the response body from the Azure Function.</returns>
-    [McpServerTool, Description("Invokes an Azure Function (HTTP trigger) with a JSON payload")]
-    public async Task<string> TriggerFunctionAsync(string functionUrlWithCode, string jsonPayLoad)
-    {
-        using var content = new StringContent(jsonPayLoad, Encoding.UTF8, "application/json");
-
-        var response = await _http.PostAsync(functionUrlWithCode, content);
-        var body = await response.Content.ReadAsStringAsync();
-
-        return $"HTTP {(int)response.StatusCode} {response.StatusCode}\n{body}";
-    }
 }
