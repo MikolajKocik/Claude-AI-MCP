@@ -20,7 +20,6 @@ public sealed class AzureTools
     private readonly BlobServiceClient _blobService;
     private readonly LogsQueryClient _logs;
     private readonly ArmClient _arm;
-    private readonly HttpClient _http;
 
     public AzureTools(
         ILogger<AzureTools> logger,
@@ -33,7 +32,6 @@ public sealed class AzureTools
         _blobService = blobService;
         _logs = logs;
         _arm = arm;
-        _http = http;
     }
 
     /// <summary>

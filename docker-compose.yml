@@ -1,0 +1,15 @@
+services:
+  claude-mcp:
+    build:
+        context: .
+        dockerfile: ClaudeMCP/Dockerfile
+    env_file: .env
+    container_name: claude-mcp
+
+  # MCP Gateway
+  mcp-gateway:
+    image: docker/mcp-gateway
+    volumes:
+      - ./config.json:/root/.docker/mcp/config.json
+    depends_on:
+      - claude-mcp

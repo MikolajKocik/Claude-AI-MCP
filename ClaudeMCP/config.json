@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "claude-mcp": {
+      "command": "dotnet",
+      "args": ["ClaudeMCP.dll"]
+    }
+  }
+}
