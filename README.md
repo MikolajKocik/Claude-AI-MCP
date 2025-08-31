@@ -184,6 +184,3 @@ docker compose up --build
 - Do not commit secrets. Use environment variables or a secrets manager.
 - Scope Azure roles and permissions minimally.
 - Rotate keys and credentials regularly.
-
-## License
-TODO: Add license information or reference the LICENSE file if present.
